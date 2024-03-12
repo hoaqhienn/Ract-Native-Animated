@@ -1,123 +1,166 @@
-import React, { useRef } from "react";
-import {
-  Animated,
-  Text,
-  View,
-  StyleSheet,
-  SafeAreaView,
-  Pressable,
-  Image,
-} from "react-native";
+import React, { useEffect, useRef } from "react";
+import { Animated, StyleSheet, SafeAreaView, Image } from "react-native";
 
 const App = () => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const decayAnim = useRef(new Animated.Value(0)).current;
-  const springAnim = useRef(new Animated.Value(0)).current;
+  const y = useRef(new Animated.Value(0)).current;
+  const x = useRef(new Animated.Value(1)).current;
 
-  const fadeIn = () => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 1000,
-      useNativeDriver: true,
-    }).start();
-  };
+  const fiveA = useRef(new Animated.Value(0)).current;
+  const fiveB = useRef(new Animated.Value(0)).current;
 
-  const fadeOut = () => {
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 1000,
-      useNativeDriver: true,
-    }).start();
-  };
+  const shipScale = useRef(new Animated.Value(-1)).current;
 
-  const decayAnimation = () => {
-    Animated.decay(decayAnim, {
-      velocity: 1, // Set the initial velocity for decay
-      deceleration: 0.997,
-      useNativeDriver: true,
-    }).start();
-  };
+  useEffect(() => {
+    Animated.loop(
+      Animated.parallel([
+        //4.
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(y, {
+              toValue: 600,
+              duration: 5000,
+              useNativeDriver: true,
+            }),
+            Animated.sequence([
+              Animated.delay(4000),
+              Animated.timing(x, {
+                toValue: 0,
+                duration: 1000,
+                useNativeDriver: true,
+              }),
+            ]),
+          ]),
+          Animated.timing(y, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.timing(x, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }), //*
+        //5A.
+        Animated.sequence([
+          Animated.sequence([
+            Animated.timing(fiveA, {
+              toValue: 1000, // Adjust this value to control the distance the ship moves
+              duration: 2000, // Adjust this value to control the animation speed
+              useNativeDriver: true,
+            }),
+            Animated.timing(shipScale, {
+              toValue: 1,
+              duration: 1,
+              useNativeDriver: true,
+            }),
+          ]),
 
-  const springAnimation = () => {
-    Animated.spring(springAnim, {
-      toValue: 1,
-      friction: 2,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
-  };
+          Animated.sequence([
+            Animated.timing(fiveA, {
+              toValue: 0,
+              duration: 2000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(shipScale, {
+              toValue: -1,
+              duration: 1,
+              useNativeDriver: true,
+            }),
+          ]),
+        ]), //*
+        //5.
+        Animated.sequence([
+          Animated.timing(fiveB, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(fiveB, {
+            toValue: 0,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+        ]), //*
+      ])
+    ).start();
+  }, []);
 
-  const resetAll = () => {
-    // Create a parallel animation to reset all values
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 500, // Adjust duration as needed
-        useNativeDriver: true,
-      }),
-      Animated.timing(decayAnim, {
-        toValue: 0,
-        duration: 1000, // Adjust duration as needed
-        useNativeDriver: true,
-      }),
-      Animated.timing(springAnim, {
-        toValue: 0,
-        duration: 1500, // Adjust duration as needed
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
+  const fontSize = fiveB.interpolate({
+    inputRange: [0, 1],
+    outputRange: [24, 36], // Start and end font sizes
+  });
+
+  const imgSize = fiveB.interpolate({
+    inputRange: [0, 1],
+    outputRange: [100, 200], // Start and end font sizes
+  });
+
+  const colorAnimation = fiveB.interpolate({
+    inputRange: [0, 0.25, 0.5, 0.75, 1],
+    outputRange: ["red", "orange", "yellow", "green", "blue"], // Rainbow colors
+  });
 
   return (
     <SafeAreaView style={styles.container}>
       <Animated.View
-        style={[
-          styles.fadingContainer,
-          {
-            opacity: fadeAnim,
-          },
-        ]}
+        style={{
+          position: "absolute",
+          bottom: y,
+          left: 100,
+          opacity: x,
+          zIndex: 0,
+        }}
       >
-        <Text style={styles.fadingText}>Fading View!</Text>
+        <Image
+          source={require("./assets/balloon.png")}
+          style={{ width: 100, height: 100, resizeMode: "contain" }}
+        />
       </Animated.View>
-      <Animated.View
-        style={[
-          styles.decayContainer,
-          {
-            transform: [{ translateX: decayAnim }],
-          },
-        ]}
-      >
-        <Text style={styles.decayText}>Decay View!</Text>
+      <Animated.View style={{ position: "absolute", right: fiveA, bottom: 10 }}>
+        <Animated.Image
+          source={require("./assets/shiper.png")}
+          style={{
+            width: 100,
+            height: 100,
+            resizeMode: "contain",
+            transform: [{ scaleX: shipScale }],
+          }}
+        />
       </Animated.View>
-      <Animated.View
-        style={[
-          styles.springContainer,
-          {
-            transform: [{ scale: springAnim }],
-          },
-        ]}
-      >
-        <Image style={styles.image} source={{ uri: 'https://imgur.com/0jxpToa.png' }} />
+      <Animated.View>
+        <Animated.Text
+          style={{ fontSize, color: colorAnimation, fontWeight: 700 }}
+        >
+          Shopee cái gì cũng có...
+        </Animated.Text>
       </Animated.View>
-
-      <View style={styles.buttonRow}>
-        <Pressable style={styles.pressable} onPress={fadeIn}>
-          <Text style={styles.buttonText}>Fade In View</Text>
-        </Pressable>
-        <Pressable style={styles.pressable} onPress={fadeOut}>
-          <Text style={styles.buttonText}>Fade Out View</Text>
-        </Pressable>
-        <Pressable style={styles.pressable} onPress={decayAnimation}>
-          <Text style={styles.buttonText}>Decay Animation</Text>
-        </Pressable>
-        <Pressable style={styles.pressable} onPress={springAnimation}>
-          <Text style={styles.buttonText}>Spring Animation</Text>
-        </Pressable>
-        <Pressable style={styles.pressable} onPress={resetAll}>
-          <Text style={styles.buttonText}>Reset All</Text>
-        </Pressable>
-      </View>
+      <Animated.View style={{ flexDirection: "row" }}>
+        <Animated.Image
+          source={require("./assets/noodle.png")}
+          style={{ width: imgSize, height: imgSize, resizeMode: "contain" }}
+        />
+        <Animated.Image
+          source={require("./assets/coca.png")}
+          style={{ width: imgSize, height: imgSize, resizeMode: "cover" }}
+        />
+        <Animated.Image
+          source={require("./assets/snack.png")}
+          style={{ width: imgSize, height: imgSize, resizeMode: "contain" }}
+        />
+      </Animated.View>
+      <Animated.View style={{ position: "absolute", top: fiveA, right: 10 }}>
+        <Animated.Image
+          source={require("./assets/tom.png")}
+          style={{ width: 150, height: 150, resizeMode: "contain" }}
+        />
+      </Animated.View>
+      <Animated.View style={{ position: "absolute", right: fiveA, top: 10 }}>
+        <Animated.Image
+          source={require("./assets/jerry.png")}
+          style={{ width: 150, height: 150, resizeMode: "contain", transform: [{ scaleX: shipScale }], }}
+        />
+      </Animated.View>
     </SafeAreaView>
   );
 };
@@ -127,51 +170,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-  fadingContainer: {
-    padding: 20,
-    backgroundColor: "powderblue",
-    marginBottom: 20,
-  },
-  fadingText: {
-    fontSize: 28,
-  },
-  springContainer: {
-    padding: 20,
-    backgroundColor: "lightgreen",
-    marginBottom: 20,
-  },
-  springText: {
-    fontSize: 28,
-  },
-  decayContainer: {
-    padding: 20,
-    backgroundColor: "coral",
-    marginBottom: 20,
-  },
-  decayText: {
-    fontSize: 28,
-  },
-  buttonRow: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "center",
-    marginVertical: 20,
-  },
-  pressable: {
-    marginHorizontal: 10,
-    padding: 10,
-    backgroundColor: "blue",
-    borderRadius: 5,
-  },
-  buttonText: {
-    fontSize: 16,
-    color: "white",
-  },
-  image: {
-    width: 150,
-    height: 150,
-    resizeMode: 'contain',
   },
 });
 
